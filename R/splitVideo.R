@@ -23,9 +23,9 @@ splitVideo = function(filepath, fps, xpix = 320, ypix = -1) {
     unlink(file.path(unlist(strsplit(filepath, "\\."))[1]), recursive = TRUE)
   }
 
-  system(paste("ffmpeg -loglevel panic -y -i ", filepath, " -vf scale=", xpix, ":", ypix, " ", gsub("\\.", "_COMPRESSED.", filepath), sep = ""))
+  system(paste0("ffmpeg -loglevel panic -y -i \"", filepath, "\" -vf scale=", xpix, ":", ypix, " \"", gsub("\\.", "_COMPRESSED.", filepath), "\""))
 
   dir.create(file.path(unlist(strsplit(filepath, "\\."))[1]), showWarnings = FALSE)
 
-  system(paste("ffmpeg -loglevel panic -y -i ", gsub("\\.", "_COMPRESSED.", filepath), " -q:v 2 -vf fps=", fps, " -b:v 2000 -bt 20M ", unlist(strsplit(filepath, "\\."))[1], "/frame%06d.jpg", sep = ""))
+  system(paste0("ffmpeg -loglevel panic -y -i \"", gsub("\\.", "_COMPRESSED.", filepath), "\" -q:v 2 -vf fps=", fps, " -b:v 2000 -bt 20M \"", unlist(strsplit(filepath, "\\."))[1], "/frame%06d.jpg\""))
 }
