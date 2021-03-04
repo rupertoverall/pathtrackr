@@ -18,7 +18,7 @@ Installation
 You can install this fork of *pathtrackr* directly within R using the *install\_github()* function from the [devtools](https://www.rstudio.com/products/rpackages/devtools/) package:
 
 ``` r
-install_github("rupertoverall/pathtrackr", build_vignettes = TRUE)
+devtools::install_github("rupertoverall/pathtrackr", build_vignettes = TRUE)
 ```
 
 
