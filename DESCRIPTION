@@ -1,10 +1,11 @@
 Package: pathtrackr
 Type: Package
 Title: Video Tracking and Analysis of Animal Movement
-Version: 1.2.3
+Version: 1.3.0
 Authors@R: as.person(c(
     "Aaron Harmer <a.harmer@massey.ac.nz> [aut, cre]",
-    "Daniel Thomas <d.b.thomas@massey.ac.nz> [aut]"
+    "Daniel Thomas <d.b.thomas@massey.ac.nz> [aut]",
+    "Rupert Overall <mail@rupertoverall.net> [ctb]"
   ))
 Maintainer: Aaron Harmer <a.harmer@massey.ac.nz>
 Description: The 'pathtrackr' package allows for automated video tracking of an
@@ -30,7 +31,8 @@ Imports:
 	raster
 Remotes:
 	aoles/EBImage
-RoxygenNote: 6.1.1
+RoxygenNote: 7.1.1
+Encoding: UTF-8
 Suggests: knitr,
     rmarkdown
 VignetteBuilder: knitr
