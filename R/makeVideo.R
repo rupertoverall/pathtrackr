@@ -1,21 +1,27 @@
 #' Make a video of an animal's tracked path
 #'
-#' \code{makeVideo} uses \code{trackPath} and FFmpeg to produce an mp4 video of an animal's movement along with tracking behaviour and summary plots.
+#' \code{makeVideo} uses \code{trackPath} and FFmpeg to produce an mp4 video of
+#' an animal's movement along with tracking behaviour and summary plots.
 #' @inheritParams trackPath
 #' @details See documentation for \code{\link{trackPath}}.
-#' @return An mp4 video of an animal's movement containing the original video, tracking behaviour plots and summary plots.
-#' @note \code{makeVideo} requires FFmpeg to be installed on your machine. FFmpeg is a cross-platform, open-source video editing tool. It can be downloaded from \url{https://ffmpeg.org}.
+#' @return An mp4 video of an animal's movement containing the original video,
+#'   tracking behaviour plots and summary plots.
+#' @note \code{makeVideo} requires FFmpeg to be installed on your machine.
+#'   FFmpeg is a cross-platform, open-source video editing tool. It can be
+#'   downloaded from \url{https://ffmpeg.org}.
+#' @importFrom stats median
+#' @importFrom utils flush.console txtProgressBar setTxtProgressBar
+#' @importFrom graphics rasterImage
+#' @importFrom grDevices jpeg
 #' @importFrom raster raster extent select
 #' @importFrom viridis viridis
 #' @importFrom pbapply pboptions pbapply pblapply
 #' @importFrom abind abind
 #' @importFrom EBImage bwlabel opening thresh rmObjects
 #' @importFrom imager isoblur as.cimg
-#' @importFrom plyr count aaply create_progress_bar progress_text
+#' @importFrom plyr count create_progress_bar progress_text
 #' @export
 makeVideo = function(dirpath, xarena, yarena, fps = 30, box = 1, jitter.damp = 0.9) {
-
-  require(raster, quietly = TRUE)
 
   if (length(dir(dirpath, "*.jpg")) > 0) {
     file.list = list.files(dirpath, full.names = TRUE)
@@ -24,23 +30,22 @@ makeVideo = function(dirpath, xarena, yarena, fps = 30, box = 1, jitter.damp = 0
   }
 
   # Set progress bar options
-  pboptions(type = "txt", char = ":")
-  pbapp = create_progress_bar(name = "text", style = 3, char = ":", width = 50)
+  pbapply::pboptions(type = "txt", char = ":")
 
   # Crop array to area of interest if needed
   message("Click once on the top left corner of your arena, followed by clicking once on the bottom right corner of your arena, to define the opposing corners of the entire arena...\n")
-  flush.console()
-  plot(raster(file.list[1], band = 2), col = gray.colors(256), asp = 1, legend = FALSE)
-  bg.crop = base::as.vector(extent(select(raster(file.list[1], band = 2))))
+  utils::flush.console()
+  raster::plot(raster::raster(file.list[1], band = 2), col = gray.colors(256), asp = 1, legend = FALSE)
+  bg.crop = base::as.vector(raster::extent(raster::select(raster::raster(file.list[1], band = 2))))
 
   # Get aniaml tracking box in first frame
   bg.ref = greyJPEG(file.list[1])
   bg.ref = bg.ref[(dim(bg.ref)[1] - bg.crop[3]):(dim(bg.ref)[1] - bg.crop[4]), bg.crop[1]:bg.crop[2]]
   bg.dim = dim(bg.ref)
   message("Imagine the minimum sized rectangle that encompasses your whole animal. Click once to define the top left corner of this rectangle, followed by clicking once to define the bottom right corner of this rectangle...\n")
-  flush.console()
-  plot(raster(reflect(bg.ref), xmn = 0, xmx = bg.dim[2], ymn = 0, ymx = bg.dim[1]), col = gray.colors(256), asp = 1, legend = FALSE)
-  animal.crop = round(base::as.vector(extent(select(raster(bg.ref, xmn = 0, xmx = bg.dim[2], ymn = 0, ymx = bg.dim[1])))))
+  utils::flush.console()
+  raster::plot(raster::raster(reflect(bg.ref), xmn = 0, xmx = bg.dim[2], ymn = 0, ymx = bg.dim[1]), col = gray.colors(256), asp = 1, legend = FALSE)
+  animal.crop = round(base::as.vector(raster::extent(raster::select(raster::raster(bg.ref, xmn = 0, xmx = bg.dim[2], ymn = 0, ymx = bg.dim[1])))))
 
   ref.x1 = animal.crop[1]
   ref.x2 = animal.crop[2]
@@ -51,20 +56,20 @@ makeVideo = function(dirpath, xarena, yarena, fps = 30, box = 1, jitter.damp = 0
 
   # Generate background reference frame
   message("Generating background reference frame...\n")
-  flush.console()
+  utils::flush.console()
   if (length(file.list) >= 1000) {
     idx = sample(file.list, 1000)
     bg.sample = abind(pblapply(idx, greyJPEG), along = 3)
     bg.sample = bg.sample[(dim(bg.sample)[1] - bg.crop[3]):(dim(bg.sample)[1] - bg.crop[4]), bg.crop[1]:bg.crop[2],]
-    bg.med = pbapply(bg.sample, 1:2, median)
+    bg.med = pbapply(bg.sample, 1:2, stats::median)
   } else {
     bg.sample = abind(pblapply(file.list, greyJPEG), along = 3)
     bg.sample = bg.sample[(dim(bg.sample)[1] - bg.crop[3]):(dim(bg.sample)[1] - bg.crop[4]), bg.crop[1]:bg.crop[2],]
-    bg.med = pbapply(bg.sample, 1:2, median)
+    bg.med = pbapply(bg.sample, 1:2, stats::median)
   }
 
   message("\nTracking animal...\n")
-  flush.console()
+  utils::flush.console()
 
   # Loop through frames fitting tracking box and extracting animal position etc.
   xpos = c()
@@ -78,14 +83,14 @@ makeVideo = function(dirpath, xarena, yarena, fps = 30, box = 1, jitter.damp = 0
   max.animal = 1.75
   temp.movement = c()
 
-  pbloop = txtProgressBar(min = 0, max = length(file.list), style = 3, char = ":", width = 50)
+  pbloop = utils::txtProgressBar(min = 0, max = length(file.list), style = 3, char = ":", width = 50)
 
   dir.create(paste(dirpath, "_temp", sep = ""))
   plot.list = paste(dirpath, "_temp/plot_", gsub("\\s", "0", format(seq(1:length(file.list)), justify = "left", width=6)), ".jpg", sep = "")
 
   for (i in 1:length(file.list)) {
 
-    jpeg(plot.list[i], width = 1080 * 1.5, height = 1080)
+    grDevices::jpeg(plot.list[i], width = 1080 * 1.5, height = 1080)
 
     # For first frame...
     if (i == 1) {
@@ -111,12 +116,12 @@ makeVideo = function(dirpath, xarena, yarena, fps = 30, box = 1, jitter.damp = 0
       f = greyJPEG(file.list[i])
       f = f[(dim(f)[1] - bg.crop[3]):(dim(f)[1] - bg.crop[4]), bg.crop[1]:bg.crop[2]]
       plot(1, 1, xlim = c(1, bg.dim[2]), ylim = c(1, bg.dim[1]), type = "n", xaxs = "i", yaxs = "i", xaxt = "n", yaxt = "n", xlab = "", ylab = "", bty = "o", asp = 1)
-      rasterImage(as.raster(reflect(f)), 1, 1, bg.dim[2], bg.dim[1])
+      graphics::rasterImage(raster::raster(reflect(f)), 1, 1, bg.dim[2], bg.dim[1])
 
-      plot(raster(reflect(frame), xmn = 0, xmx = bg.dim[2], ymn = 0, ymx = bg.dim[1]), legend = FALSE, xaxs = "i", yaxs = "i", xaxt = "n", yaxt = "n", cex = 1.5, col = viridis(256), asp = 1)
+      raster::plot(raster::raster(reflect(frame), xmn = 0, xmx = bg.dim[2], ymn = 0, ymx = bg.dim[1]), legend = FALSE, xaxs = "i", yaxs = "i", xaxt = "n", yaxt = "n", cex = 1.5, col = viridis::viridis(256), asp = 1)
       rect(ref.x1, ref.y1, ref.x2, ref.y2, border = "yellow", lwd = 1.5)
 
-      plot(raster(reflect(tbox), xmn = 0, xmx = dim(tbox)[2], ymn = 0, ymx = dim(tbox)[1]), legend = FALSE, xaxs = "i", yaxs = "i", xaxt = "n", yaxt = "n", cex = 1.5, col = viridis(256))
+      raster::plot(raster::raster(reflect(tbox), xmn = 0, xmx = dim(tbox)[2], ymn = 0, ymx = dim(tbox)[1]), legend = FALSE, xaxs = "i", yaxs = "i", xaxt = "n", yaxt = "n", cex = 1.5, col = viridis::viridis(256))
       points(round(animal$centre[2]), round(animal$centre[1]), col = "red", pch = 16, cex = 2.5)
 
       plot(xpos * (xarena/bg.dim[2]), ypos * (yarena/bg.dim[1]), col = "#08306B", type = "l", lwd = 2, pch = 16, xlim = c(0, bg.dim[1] * (xarena/bg.dim[1])), ylim = c(0, bg.dim[2] * (yarena/bg.dim[2])), xlab = "Distance (mm)", ylab = "Distance (mm)", xaxs = "i", yaxs = "i", cex = 1.5, asp = 1)
@@ -183,7 +188,7 @@ makeVideo = function(dirpath, xarena, yarena, fps = 30, box = 1, jitter.damp = 0
           frame.break = frame.break[(dim(frame.break)[1] - bg.crop[3]):(dim(frame.break)[1] - bg.crop[4]), bg.crop[1]:bg.crop[2]]
           frame.break = reflect(abs(frame.break - bg.med))
           frame.break.bin = as.matrix(bwlabel(opening(thresh(isoblur(as.cimg(frame.break), blur)))))
-          blob.pixcount = as.matrix(count(frame.break.bin[frame.break.bin > 0]))
+          blob.pixcount = as.matrix(plyr::count(frame.break.bin[frame.break.bin > 0]))
 
         if (nrow(blob.pixcount) > 1) {
           frame.break.bin = rmObjects(frame.break.bin, blob.pixcount[blob.pixcount[,2] < mean(animal.size, na.rm = TRUE)*min.animal | blob.pixcount[,2] > mean(animal.size, na.rm = TRUE)*max.animal,1])
@@ -235,15 +240,15 @@ makeVideo = function(dirpath, xarena, yarena, fps = 30, box = 1, jitter.damp = 0
       f = greyJPEG(file.list[i])
       f = f[(dim(f)[1] - bg.crop[3]):(dim(f)[1] - bg.crop[4]), bg.crop[1]:bg.crop[2]]
       plot(1, 1, xlim = c(1, bg.dim[2]), ylim = c(1, bg.dim[1]), type = "n", xaxs = "i", yaxs = "i", xaxt = "n", yaxt = "n", xlab = "", ylab = "", bty = "o", asp = 1)
-      rasterImage(as.raster(reflect(f)), 1, 1, bg.dim[2], bg.dim[1])
+      graphics::rasterImage(raster::raster(reflect(f)), 1, 1, bg.dim[2], bg.dim[1])
 
-      plot(raster(reflect(frame), xmn = 0, xmx = bg.dim[2], ymn = 0, ymx = bg.dim[1]), legend = FALSE, xaxs = "i", yaxs = "i", xaxt = "n", yaxt = "n", cex = 1.5, col = viridis(256), asp = 1)
+      raster::plot(raster::raster(reflect(frame), xmn = 0, xmx = bg.dim[2], ymn = 0, ymx = bg.dim[1]), legend = FALSE, xaxs = "i", yaxs = "i", xaxt = "n", yaxt = "n", cex = 1.5, col = viridis::viridis(256), asp = 1)
       rect(x1, y1, x2, y2, border = "yellow", lwd = 1.5)
 
-      plot(raster(reflect(tbox), xmn = 0, xmx = dim(tbox)[2], ymn = 0, ymx = dim(tbox)[1]), legend = FALSE, xaxs = "i", yaxs = "i", xaxt = "n", yaxt = "n", cex = 1.5, col = viridis(256))
+      raster::plot(raster::raster(reflect(tbox), xmn = 0, xmx = dim(tbox)[2], ymn = 0, ymx = dim(tbox)[1]), legend = FALSE, xaxs = "i", yaxs = "i", xaxt = "n", yaxt = "n", cex = 1.5, col = viridis::viridis(256))
       points(round(animal$centre[2]), round(animal$centre[1]), col = "red", pch = 16, cex = 2.5)
 
-      segments((xpos[i - 1] - x1), (ypos[i - 1] - y1), (xpos[i] - x1), (ypos[i] - y1), col = "red", pch = 16, lwd = 3)
+      graphics::segments((xpos[i - 1] - x1), (ypos[i - 1] - y1), (xpos[i] - x1), (ypos[i] - y1), col = "red", pch = 16, lwd = 3)
 
       plot(xpos * (xarena/bg.dim[2]), ypos * (yarena/bg.dim[1]), col = "#08306B", type = "l", lwd = 2, pch = 16, xlim = c(0, bg.dim[1] * (xarena/bg.dim[1])), ylim = c(0, bg.dim[2] * (yarena/bg.dim[2])), xlab = "Distance (mm)", ylab = "Distance (mm)", xaxs = "i", yaxs = "i", cex = 1.5, asp = 1)
 
@@ -253,8 +258,8 @@ makeVideo = function(dirpath, xarena, yarena, fps = 30, box = 1, jitter.damp = 0
       plot(temp.movement[, 3], temp.movement[, 2], type = "l", lwd = 1.5, xlab = "Time (s)", ylab = "Velocity (mm/s)", bty = "l", xlim = c(0, length(file.list) * (1/fps)), col = "#08306B", cex = 1.5)
 
     }
-    dev.off()
-    setTxtProgressBar(pbloop, i)
+    grDevices::dev.off()
+    utils::setTxtProgressBar(pbloop, i)
   }
 
   system(paste("ffmpeg -loglevel panic -y -framerate ", fps, " -i ", paste(dirpath, "_temp/plot_%06d.jpg", sep = ""), " -c:v libx264 -r 25 -pix_fmt yuv420p ", paste(paste(unlist(strsplit(dirpath, "/"))[1:(length(unlist(strsplit(dirpath, "/"))) - 1)], collapse = "/"), "/", unlist(strsplit(dirpath, "/"))[length(unlist(strsplit(dirpath, "/")))], sep = ""), "_TRACKED.mp4", sep = ""))
@@ -263,7 +268,7 @@ makeVideo = function(dirpath, xarena, yarena, fps = 30, box = 1, jitter.damp = 0
 
   if (length(breaks) > 0) {
     warning("Tracking was not possible for ", length(breaks), " frames: you can proceed with this tracked path but you might consider using a higher frame rate or increasing the tracking 'box' size to improve the result.")
-    flush.console()
+    utils::flush.console()
   }
 
 }

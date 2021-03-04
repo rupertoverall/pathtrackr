@@ -4,12 +4,13 @@
 #' @param mat a matrix of blobs (generated with a blob detection function)
 #' @return A list of ellipse parameters calculated for the blob in the matrix.
 #' @importFrom cluster ellipsoidhull
+#' @importFrom raster predict
 #' @noRd
 
 # Calculate parameters of ellipse
 ellPar = function(mat){
-  ell = ellipsoidhull(mat)
-  exy = predict(ell)
+  ell = cluster::ellipsoidhull(mat)
+  exy = raster::predict(ell)
   centre = ell$loc
   dist2center = sqrt(rowSums((t(t(exy)-centre))^2))
   major = 2*max(dist2center)

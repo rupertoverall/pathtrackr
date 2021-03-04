@@ -4,8 +4,7 @@
 \alias{makeVideo}
 \title{Make a video of an animal's tracked path}
 \usage{
-makeVideo(dirpath, xarena, yarena, fps = 30, box = 1,
-  jitter.damp = 0.9)
+makeVideo(dirpath, xarena, yarena, fps = 30, box = 1, jitter.damp = 0.9)
 }
 \arguments{
 \item{dirpath}{a character string specifying a directory containing only jpeg files extracted from a video}
@@ -21,14 +20,18 @@ makeVideo(dirpath, xarena, yarena, fps = 30, box = 1,
 \item{jitter.damp}{a value between 0.5 and 1. Reduces noise in the animal's track, useful if the animal's track is very jittery, which may overestiamte path length. A value of 1 indicates no jitter damping, 0.5 indicates extreme damping and is unlikely to be useful}
 }
 \value{
-An mp4 video of an animal's movement containing the original video, tracking behaviour plots and summary plots.
+An mp4 video of an animal's movement containing the original video,
+  tracking behaviour plots and summary plots.
 }
 \description{
-\code{makeVideo} uses \code{trackPath} and FFmpeg to produce an mp4 video of an animal's movement along with tracking behaviour and summary plots.
+\code{makeVideo} uses \code{trackPath} and FFmpeg to produce an mp4 video of
+an animal's movement along with tracking behaviour and summary plots.
 }
 \details{
 See documentation for \code{\link{trackPath}}.
 }
 \note{
-\code{makeVideo} requires FFmpeg to be installed on your machine. FFmpeg is a cross-platform, open-source video editing tool. It can be downloaded from \url{https://ffmpeg.org}.
+\code{makeVideo} requires FFmpeg to be installed on your machine.
+  FFmpeg is a cross-platform, open-source video editing tool. It can be
+  downloaded from \url{https://ffmpeg.org}.
 }

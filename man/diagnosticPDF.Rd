@@ -2,10 +2,10 @@
 % Please edit documentation in R/diagnosticPDF.R
 \name{diagnosticPDF}
 \alias{diagnosticPDF}
-\title{Track an animal's movement across a series of still frames with diagnostic plots}
+\title{Track an animal's movement across a series of still frames with diagnostic
+plots}
 \usage{
-diagnosticPDF(dirpath, xarena, yarena, fps = 30, box = 1,
-  jitter.damp = 0.9)
+diagnosticPDF(dirpath, xarena, yarena, fps = 30, box = 1, jitter.damp = 0.9)
 }
 \arguments{
 \item{dirpath}{a character string specifying a directory containing only jpeg files extracted from a video}
@@ -21,10 +21,17 @@ diagnosticPDF(dirpath, xarena, yarena, fps = 30, box = 1,
 \item{jitter.damp}{a value between 0.5 and 1. Reduces noise in the animal's track, useful if the animal's track is very jittery, which may overestiamte path length. A value of 1 indicates no jitter damping, 0.5 indicates extreme damping and is unlikely to be useful}
 }
 \value{
-A list containing a matrix of xy co-ordinates of the animal in each frame, a matrix of movement data including the distance, velocity and trajectories of movement between frames, summary statistics, and a diagnostic PDF.
+A list containing a matrix of xy co-ordinates of the animal in each
+  frame, a matrix of movement data including the distance, velocity and
+  trajectories of movement between frames, summary statistics, and a
+  diagnostic pdf.
 }
 \description{
-\code{diagnosticPDF} contains the same function as the core \code{pathtrackr::trackPath} function but, in addition, produces a pdf with disgnostic plots for troubleshooting problematic animals and tracks. A set of six plots for each frame allow the user to view the tracking behaviour of the function on a frame by frame basis.
+\code{diagnosticPDF} contains the same function as the core \code{trackPath}
+function but, in addition, produces a pdf with diagnostic plots for
+troubleshooting problematic animals and tracks. A set of six plots for each
+frame allow the user to view the tracking behaviour of the function on a
+frame by frame basis.
 }
 \details{
 See documentation for \code{\link{trackPath}}.

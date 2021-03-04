@@ -9,17 +9,17 @@
 #' @param jitter.damp a value between 0.5 and 1. Reduces noise in the animal's track, useful if the animal's track is very jittery, which may overestiamte path length. A value of 1 indicates no jitter damping, 0.5 indicates extreme damping and is unlikely to be useful
 #' @details \code{trackPath} tracks an individual animal's movement across a series of still frames. The function utilises a focusing box to limit the search area for the animal relative to its previous position. This makes \code{trackPath} relatively robust to background lighting changes, extraneous backgroud movement and jpeg noise. It can  handle a dark animal on a light background and vice versa, as well as heterogenous backgrounds where the animal is at times darker and lighter than the background.
 #' @return A list containing a matrix of xy co-ordinates of the animal in each frame, a matrix of movement data including the distance, velocity and trajectories of movement between frames, and summary statistics.
+#' @importFrom stats median na.omit
+#' @importFrom utils tail flush.console txtProgressBar setTxtProgressBar
+#' @importFrom grDevices gray.colors
 #' @importFrom raster raster extent select
 #' @importFrom pbapply pboptions pbapply pblapply
 #' @importFrom abind abind
 #' @importFrom EBImage bwlabel opening thresh rmObjects
 #' @importFrom imager isoblur as.cimg
-#' @importFrom plyr count aaply create_progress_bar progress_text
+#' @importFrom plyr count create_progress_bar
 #' @export
-trackPath = function(dirpath, xarena, yarena, fps = 30, box = 1, jitter.damp = 0.9) {
-
-  require(raster, quietly = TRUE, warn.conflicts = FALSE)
-
+trackPath = function(dirpath, xarena = NULL, yarena = NULL, fps = 30, box = 1, jitter.damp = 0.9) {
   if (length(dir(dirpath, "*.jpg")) > 0) {
     file.list = list.files(dirpath, full.names = TRUE)
   } else {
@@ -27,23 +27,23 @@ trackPath = function(dirpath, xarena, yarena, fps = 30, box = 1, jitter.damp = 0
   }
 
   # Set progress bar options
-  pboptions(type = "txt", char = ":")
-  pbapp = create_progress_bar(name = "text", style = 3, char = ":", width = 50)
+  pbapply::pboptions(type = "txt", char = ":")
+  pbapp = plyr::create_progress_bar(name = "text", style = 3, char = ":", width = 50)
 
   # Crop array to area of interest if needed
   message("Click once on the top left corner of your arena, followed by clicking once on the bottom right corner of your arena, to define the opposing corners of the entire arena...\n")
-  flush.console()
-  plot(raster(file.list[1], band = 2), col = gray.colors(256), asp = 1, legend = FALSE)
-  bg.crop = base::as.vector(extent(select(raster(file.list[1], band = 2))))
+  utils::flush.console()
+  plot(raster::raster(file.list[1], band = 2), col = grDevices::gray.colors(256), asp = 1, legend = FALSE)
+  bg.crop = base::as.vector(raster::extent(raster::select(raster::raster(file.list[1], band = 2))))
 
   # Get aniaml tracking box in first frame
   bg.ref = greyJPEG(file.list[1])
   bg.ref = bg.ref[(dim(bg.ref)[1] - bg.crop[3]):(dim(bg.ref)[1] - bg.crop[4]), bg.crop[1]:bg.crop[2]]
   bg.dim = dim(bg.ref)
   message("Imagine the minimum sized rectangle that encompasses your whole animal. Click once to define the top left corner of this rectangle, followed by clicking once to define the bottom right corner of this rectangle...\n")
-  flush.console()
-  plot(raster(reflect(bg.ref), xmn = 0, xmx = bg.dim[2], ymn = 0, ymx = bg.dim[1]), col = gray.colors(256), asp = 1, legend = FALSE)
-  animal.crop = round(base::as.vector(extent(select(raster(bg.ref, xmn = 0, xmx = bg.dim[2], ymn = 0, ymx = bg.dim[1])))))
+  utils::flush.console()
+  plot(raster::raster(reflect(bg.ref), xmn = 0, xmx = bg.dim[2], ymn = 0, ymx = bg.dim[1]), col = grDevices::gray.colors(256), asp = 1, legend = FALSE)
+  animal.crop = round(base::as.vector(raster::extent(raster::select(raster::raster(bg.ref, xmn = 0, xmx = bg.dim[2], ymn = 0, ymx = bg.dim[1])))))
 
   ref.x1 = animal.crop[1]
   ref.x2 = animal.crop[2]
@@ -54,20 +54,20 @@ trackPath = function(dirpath, xarena, yarena, fps = 30, box = 1, jitter.damp = 0
 
   # Generate background reference frame
   message("Generating background reference frame...\n")
-  flush.console()
+  utils::flush.console()
   if (length(file.list) >= 1000) {
     idx = sample(file.list, 1000)
-    bg.sample = abind(pblapply(idx, greyJPEG), along = 3)
+    bg.sample = abind::abind(pbapply::pblapply(idx, greyJPEG), along = 3)
     bg.sample = bg.sample[(dim(bg.sample)[1] - bg.crop[3]):(dim(bg.sample)[1] - bg.crop[4]), bg.crop[1]:bg.crop[2],]
-    bg.med = pbapply(bg.sample, 1:2, median)
+    bg.med = pbapply::pbapply(bg.sample, 1:2, stats::median)
   } else {
-    bg.sample = abind(pblapply(file.list, greyJPEG), along = 3)
+    bg.sample = abind::abind(pbapply::pblapply(file.list, greyJPEG), along = 3)
     bg.sample = bg.sample[(dim(bg.sample)[1] - bg.crop[3]):(dim(bg.sample)[1] - bg.crop[4]), bg.crop[1]:bg.crop[2],]
-    bg.med = pbapply(bg.sample, 1:2, median)
+    bg.med = pbapply::pbapply(bg.sample, 1:2, stats::median)
   }
 
   message("\nTracking animal...\n")
-  flush.console()
+  utils::flush.console()
 
   # Loop through frames fitting tracking box and extracting animal position etc.
   xpos = c()
@@ -80,7 +80,7 @@ trackPath = function(dirpath, xarena, yarena, fps = 30, box = 1, jitter.damp = 0
   min.animal = 0.25
   max.animal = 1.75
 
-  pbloop = txtProgressBar(min = 0, max = length(file.list), style = 3, char = ":", width = 50)
+  pbloop = utils::txtProgressBar(min = 0, max = length(file.list), style = 3, char = ":", width = 50)
 
   for (i in 1:length(file.list)) {
 
@@ -92,7 +92,7 @@ trackPath = function(dirpath, xarena, yarena, fps = 30, box = 1, jitter.damp = 0
       frame = frame[(dim(frame)[1] - bg.crop[3]):(dim(frame)[1] - bg.crop[4]), bg.crop[1]:bg.crop[2]]
       frame = abs(frame - bg.med)
       tbox = reflect(frame[ref.y1:ref.y2,ref.x1:ref.x2])
-      tbox.bin = as.matrix(bwlabel(opening(thresh(isoblur(as.cimg(tbox), blur)))))
+      tbox.bin = as.matrix(EBImage::bwlabel(EBImage::opening(EBImage::thresh(imager::isoblur(imager::as.cimg(tbox), blur)))))
       animal = ellPar(which(tbox.bin == 1, arr.ind = TRUE))
       animal.last = which(tbox.bin == 1)
 
@@ -107,16 +107,16 @@ trackPath = function(dirpath, xarena, yarena, fps = 30, box = 1, jitter.damp = 0
     } else {
 
       # Calculate co-oordinates to redraw tracking box around last position
-      if (!is.na(tail(xpos, 1))) {x1 = xpos[i - 1] - dim.x * box}
+      if (!is.na(utils::tail(xpos, 1))) {x1 = xpos[i - 1] - dim.x * box}
       if (x1 < 0) {x1 = 0}
       if (x1 > bg.dim[2]) {x1 = bg.dim[2]}
-      if (!is.na(tail(xpos, 1))) {x2 = xpos[i - 1] + dim.x * box}
+      if (!is.na(utils::tail(xpos, 1))) {x2 = xpos[i - 1] + dim.x * box}
       if (x2 < 0) {x2 = 0}
       if (x2 > bg.dim[2]) {x2 = bg.dim[2]}
-      if (!is.na(tail(ypos, 1))) {y1 = ypos[i - 1] - dim.y * box}
+      if (!is.na(utils::tail(ypos, 1))) {y1 = ypos[i - 1] - dim.y * box}
       if (y1 < 0) {y1 = 0}
       if (y1 > bg.dim[1]) {y1 = bg.dim[1]}
-      if (!is.na(tail(ypos, 1))) {y2 = ypos[i - 1] + dim.y * box}
+      if (!is.na(utils::tail(ypos, 1))) {y2 = ypos[i - 1] + dim.y * box}
       if (y2 < 0) {y2 = 0}
       if (y2 > bg.dim[1]) {y2 = bg.dim[1]}
 
@@ -125,11 +125,11 @@ trackPath = function(dirpath, xarena, yarena, fps = 30, box = 1, jitter.damp = 0
       frame = frame[(dim(frame)[1] - bg.crop[3]):(dim(frame)[1] - bg.crop[4]), bg.crop[1]:bg.crop[2]]
       frame = abs(frame - bg.med)
       tbox = reflect(frame[y2:y1,x1:x2])
-      tbox.bin = as.matrix(bwlabel(opening(thresh(isoblur(as.cimg(tbox), blur)))))
+      tbox.bin = as.matrix(EBImage::bwlabel(EBImage::opening(EBImage::thresh(imager::isoblur(imager::as.cimg(tbox), blur)))))
 
       # Calculate proportion of overlapping pixels from between current & previous frame
       animal.new = which(tbox.bin == 1)
-      animal.move = (length(na.omit(match(animal.last, animal.new))))/(max(c(length(animal.last), length(animal.new))))
+      animal.move = (length(stats::na.omit(match(animal.last, animal.new))))/(max(c(length(animal.last), length(animal.new))))
       animal.last = animal.new
 
       # Check if animal is of ~right size
@@ -160,11 +160,11 @@ trackPath = function(dirpath, xarena, yarena, fps = 30, box = 1, jitter.damp = 0
         frame.break = greyJPEG(file.list[i])
         frame.break = frame.break[(dim(frame.break)[1] - bg.crop[3]):(dim(frame.break)[1] - bg.crop[4]), bg.crop[1]:bg.crop[2]]
         frame.break = reflect(abs(frame.break - bg.med))
-        frame.break.bin = as.matrix(bwlabel(opening(thresh(isoblur(as.cimg(frame.break), blur)))))
-        blob.pixcount = as.matrix(count(frame.break.bin[frame.break.bin > 0]))
+        frame.break.bin = as.matrix(EBImage::bwlabel(EBImage::opening(EBImage::thresh(imager::isoblur(imager::as.cimg(frame.break), blur)))))
+        blob.pixcount = as.matrix(plyr::count(frame.break.bin[frame.break.bin > 0]))
 
         if (nrow(blob.pixcount) > 1) {
-          frame.break.bin = rmObjects(frame.break.bin, blob.pixcount[blob.pixcount[,2] < mean(animal.size, na.rm = TRUE)*min.animal | blob.pixcount[,2] > mean(animal.size, na.rm = TRUE)*max.animal,1])
+          frame.break.bin = EBImage::rmObjects(frame.break.bin, blob.pixcount[blob.pixcount[,2] < mean(animal.size, na.rm = TRUE)*min.animal | blob.pixcount[,2] > mean(animal.size, na.rm = TRUE)*max.animal,1])
         }
 
         if (length(which(frame.break.bin == 1)) > mean(animal.size, na.rm = TRUE)*min.animal & length(which(frame.break.bin == 1)) < mean(animal.size, na.rm = TRUE)*max.animal) {
@@ -191,7 +191,7 @@ trackPath = function(dirpath, xarena, yarena, fps = 30, box = 1, jitter.damp = 0
         }
       }
     }
-    setTxtProgressBar(pbloop, i)
+    utils::setTxtProgressBar(pbloop, i)
   }
 
   time = seq(0, length.out = length(xpos), by = 1/fps)
@@ -223,7 +223,7 @@ trackPath = function(dirpath, xarena, yarena, fps = 30, box = 1, jitter.damp = 0
 
   if (length(breaks) > 0) {
     warning("Tracking was not possible for ", length(breaks), " frames: you can proceed with this tracked path but you might consider using a higher frame rate or increasing the tracking 'box' size to improve the result.")
-    flush.console()
+    utils::flush.console()
   }
 
   return(list(position = cbind(xpos, ypos), dim.pix = c(bg.dim[2], bg.dim[1]), dim.arena = c(xarena, yarena), fps = fps, movement = movement, total.distance = total.distance, mean.velocity = mean.velocity, total.duration = total.duration, breaks = breaks))

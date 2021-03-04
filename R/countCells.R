@@ -5,6 +5,7 @@
 #' @param xgrid an integer specifying the number of grid cells the arena should be divided into along its width
 #' @param ygrid an integer specifying the number of grid cells the arena should be divided into along its height
 #' @return If assigned to an object, a list containing the number of cells crossed and the proportion of total cells crossed; if not assigned to an object, a message in the console is returned.
+#' @importFrom utils flush.console
 #' @importFrom marmap diag.bathy
 #' @export
 countCells = function(path.list, xgrid, ygrid) {
@@ -43,7 +44,7 @@ countCells = function(path.list, xgrid, ygrid) {
   }
 
   message(paste("The animal crossed a total of ", length(unique(cells.cross)), "  unique grid cells (", round((length(unique(cells.cross))/(xgrid * ygrid)) * 100), "% of total grid cells)", sep = ""))
-  flush.console()
+  utils::flush.console()
 
   invisible(list(cell.count = length(unique(cells.cross)), proportion.cells = length(unique(cells.cross))/(xgrid * ygrid)))
 

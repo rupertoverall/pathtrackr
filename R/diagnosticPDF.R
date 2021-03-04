@@ -1,44 +1,53 @@
-#' Track an animal's movement across a series of still frames with diagnostic plots
+#' Track an animal's movement across a series of still frames with diagnostic
+#' plots
 #'
-#' \code{diagnosticPDF} contains the same function as the core \code{pathtrackr::trackPath} function but, in addition, produces a pdf with disgnostic plots for troubleshooting problematic animals and tracks. A set of six plots for each frame allow the user to view the tracking behaviour of the function on a frame by frame basis.
+#' \code{diagnosticPDF} contains the same function as the core \code{trackPath}
+#' function but, in addition, produces a pdf with diagnostic plots for
+#' troubleshooting problematic animals and tracks. A set of six plots for each
+#' frame allow the user to view the tracking behaviour of the function on a
+#' frame by frame basis.
 #' @inheritParams trackPath
 #' @details See documentation for \code{\link{trackPath}}.
-#' @return A list containing a matrix of xy co-ordinates of the animal in each frame, a matrix of movement data including the distance, velocity and trajectories of movement between frames, summary statistics, and a diagnostic PDF.
-#' @importFrom raster raster extent select
+#' @return A list containing a matrix of xy co-ordinates of the animal in each
+#'   frame, a matrix of movement data including the distance, velocity and
+#'   trajectories of movement between frames, summary statistics, and a
+#'   diagnostic pdf.
+#' @importFrom raster raster extent select as.raster
+#' @importFrom stats median na.omit
+#' @importFrom utils tail flush.console txtProgressBar setTxtProgressBar
+#' @importFrom graphics par rasterImage rect segments
+#' @importFrom grDevices pdf gray.colors dev.off
 #' @importFrom viridis viridis
 #' @importFrom pbapply pboptions pbapply pblapply
 #' @importFrom abind abind
 #' @importFrom EBImage bwlabel opening thresh rmObjects
 #' @importFrom imager isoblur as.cimg
-#' @importFrom plyr aaply count create_progress_bar progress_text
+#' @importFrom plyr aaply count
 #' @export
 diagnosticPDF = function(dirpath, xarena, yarena, fps = 30, box = 1, jitter.damp = 0.9) {
 
-  require(raster, quietly = TRUE)
-
-  if (length(dir(dirpath, "*.jpg")) > 0) {
+	  if (length(dir(dirpath, "*.jpg")) > 0) {
     file.list = list.files(dirpath, full.names = TRUE)
   } else {
-    stop("No files were found... check that the path to your directory is correct and that it contains only jpg files.")
+    stop("No files were found... check that the path to your digraphics::rectory is corgraphics::rect and that it contains only jpg files.")
   }
 
   # Set progress bar options
-  pboptions(type = "txt", char = ":")
-  pbapp = create_progress_bar(name = "text", style = 3, char = ":", width = 50)
+  pbapply::pboptions(type = "txt", char = ":")
 
   # Crop array to area of interest if needed
   message("Click once on the top left corner of your arena, followed by clicking once on the bottom right corner of your arena, to define the opposing corners of the entire arena...\n")
-  flush.console()
-  plot(raster(file.list[1], band = 2), col = gray.colors(256), asp = 1, legend = FALSE)
+  utils::flush.console()
+  raster::plot(raster::raster(file.list[1], band = 2), col = grDevices::gray.colors(256), asp = 1, legend = FALSE)
   bg.crop = base::as.vector(extent(select(raster(file.list[1], band = 2))))
 
   # Get aniaml tracking box in first frame
   bg.ref = greyJPEG(file.list[1])
   bg.ref = bg.ref[(dim(bg.ref)[1] - bg.crop[3]):(dim(bg.ref)[1] - bg.crop[4]), bg.crop[1]:bg.crop[2]]
   bg.dim = dim(bg.ref)
-  message("Imagine the minimum sized rectangle that encompasses your whole animal. Click once to define the top left corner of this rectangle, followed by clicking once to define the bottom right corner of this rectangle...\n")
-  flush.console()
-  plot(raster(reflect(bg.ref), xmn = 0, xmx = bg.dim[2], ymn = 0, ymx = bg.dim[1]), col = gray.colors(256), asp = 1, legend = FALSE)
+  message("Imagine the minimum sized graphics::rectangle that encompasses your whole animal. Click once to define the top left corner of this graphics::rectangle, followed by clicking once to define the bottom right corner of this graphics::rectangle...\n")
+  utils::flush.console()
+  raster::plot(raster::raster(reflect(bg.ref), xmn = 0, xmx = bg.dim[2], ymn = 0, ymx = bg.dim[1]), col = grDevices::gray.colors(256), asp = 1, legend = FALSE)
   animal.crop = round(base::as.vector(extent(select(raster(bg.ref, xmn = 0, xmx = bg.dim[2], ymn = 0, ymx = bg.dim[1])))))
 
   ref.x1 = animal.crop[1]
@@ -50,20 +59,20 @@ diagnosticPDF = function(dirpath, xarena, yarena, fps = 30, box = 1, jitter.damp
 
   # Generate background reference frame
   message("Generating background reference frame...\n")
-  flush.console()
+  utils::flush.console()
   if (length(file.list) >= 1000) {
     idx = sample(file.list, 1000)
-    bg.sample = abind(pblapply(idx, greyJPEG), along = 3)
+    bg.sample = abind::abind(pbapply::pblapply(idx, greyJPEG), along = 3)
     bg.sample = bg.sample[(dim(bg.sample)[1] - bg.crop[3]):(dim(bg.sample)[1] - bg.crop[4]), bg.crop[1]:bg.crop[2],]
-    bg.med = pbapply(bg.sample, 1:2, median)
+    bg.med = pbapply::pbapply(bg.sample, 1:2, stats::median)
   } else {
-    bg.sample = abind(pblapply(file.list, greyJPEG), along = 3)
+    bg.sample = abind::abind(pbapply::pblapply(file.list, greyJPEG), along = 3)
     bg.sample = bg.sample[(dim(bg.sample)[1] - bg.crop[3]):(dim(bg.sample)[1] - bg.crop[4]), bg.crop[1]:bg.crop[2],]
-    bg.med = pbapply(bg.sample, 1:2, median)
+    bg.med = pbapply::pbapply(bg.sample, 1:2, stats::median)
   }
 
   message("\nTracking animal...\n")
-  flush.console()
+  utils::flush.console()
 
   # Loop through frames fitting tracking box and extracting animal position etc.
   xpos = c()
@@ -77,10 +86,10 @@ diagnosticPDF = function(dirpath, xarena, yarena, fps = 30, box = 1, jitter.damp
   max.animal = 1.75
   temp.movement = c()
 
-  pbloop = txtProgressBar(min = 0, max = length(file.list), style = 3, char = ":", width = 50)
+  pbloop = utils::txtProgressBar(min = 0, max = length(file.list), style = 3, char = ":", width = 50)
 
-  diag_fig = paste(paste(unlist(strsplit(dirpath, "/"))[1:(length(unlist(strsplit(dirpath, "/"))) - 1)], collapse = "/"), "/", unlist(strsplit(dirpath, "/"))[length(unlist(strsplit(dirpath, "/")))], "_diagnostic.pdf", sep = "")
-  pdf(file = diag_fig, width = 12, height = 8)
+  diag_fig = paste(paste(unlist(strsplit(dirpath, "/"))[1:(length(unlist(strsplit(dirpath, "/"))) - 1)], collapse = "/"), "/", unlist(strsplit(dirpath, "/"))[length(unlist(strsplit(dirpath, "/")))], "_diagnostic.grDevices::pdf", sep = "")
+  grDevices::pdf(file = diag_fig, width = 12, height = 8)
 
   for (i in 1:length(file.list)) {
 
@@ -92,29 +101,29 @@ diagnosticPDF = function(dirpath, xarena, yarena, fps = 30, box = 1, jitter.damp
         frame = frame[(dim(frame)[1] - bg.crop[3]):(dim(frame)[1] - bg.crop[4]), bg.crop[1]:bg.crop[2]]
         frame = abs(frame - bg.med)
         tbox = reflect(frame[ref.y1:ref.y2,ref.x1:ref.x2])
-      tbox.bin = as.matrix(bwlabel(opening(thresh(isoblur(as.cimg(tbox), blur)))))
+      tbox.bin = as.matrix(EBImage::bwlabel(EBImage::opening(EBImage::thresh(imager::isoblur(imager::as.cimg(tbox), blur)))))
       animal = ellPar(which(tbox.bin == 1, arr.ind = TRUE))
       animal.last = which(tbox.bin == 1)
 
-      # Correct xy positions relative to entire frame and store
+      # Corgraphics::rect xy positions relative to entire frame and store
       xpos[i] = round(animal$centre[2] + ref.x1)
       ypos[i] = round(animal$centre[1] + ref.y2)
 
       # Store animal size
       animal.size[i] = animal$area
 
-      par(mfrow = c(2, 3), mar = c(5, 5, 2, 3) + 0.1, cex.axis = 1.5, cex.lab = 1.5)
+      graphics::par(mfrow = c(2, 3), mar = c(5, 5, 2, 3) + 0.1, cex.axis = 1.5, cex.lab = 1.5)
 
       f = greyJPEG(file.list[i])
       f = f[(dim(f)[1] - bg.crop[3]):(dim(f)[1] - bg.crop[4]), bg.crop[1]:bg.crop[2]]
       plot(1, 1, xlim = c(1, bg.dim[2]), ylim = c(1, bg.dim[1]), type = "n", xaxs = "i", yaxs = "i", xaxt = "n", yaxt = "n", xlab = "", ylab = "", bty = "o", asp = 1)
-      rasterImage(as.raster(reflect(f)), 1, 1, bg.dim[2], bg.dim[1])
+      graphics::rasterImage(raster::as.raster(reflect(f)), 1, 1, bg.dim[2], bg.dim[1])
 
-      plot(raster(reflect(frame), xmn = 0, xmx = bg.dim[2], ymn = 0, ymx = bg.dim[1]), legend = FALSE, xaxs = "i", yaxs = "i", xaxt = "n", yaxt = "n", cex = 1.5, col = viridis(256), asp = 1)
-      rect(ref.x1, ref.y1, ref.x2, ref.y2, border = "yellow", lwd = 1.5)
+      raster::plot(raster::raster(reflect(frame), xmn = 0, xmx = bg.dim[2], ymn = 0, ymx = bg.dim[1]), legend = FALSE, xaxs = "i", yaxs = "i", xaxt = "n", yaxt = "n", cex = 1.5, col = viridis::viridis(256), asp = 1)
+      graphics::rect(ref.x1, ref.y1, ref.x2, ref.y2, border = "yellow", lwd = 1.5)
 
-      plot(raster(reflect(tbox), xmn = 0, xmx = dim(tbox)[2], ymn = 0, ymx = dim(tbox)[1]), legend = FALSE, xaxs = "i", yaxs = "i", xaxt = "n", yaxt = "n", cex = 1.5, col = viridis(256))
-      points(round(animal$centre[2]), round(animal$centre[1]), col = "red", pch = 16, cex = 2.5)
+      raster::plot(raster::raster(reflect(tbox), xmn = 0, xmx = dim(tbox)[2], ymn = 0, ymx = dim(tbox)[1]), legend = FALSE, xaxs = "i", yaxs = "i", xaxt = "n", yaxt = "n", cex = 1.5, col = viridis::viridis(256))
+      graphics::points(round(animal$centre[2]), round(animal$centre[1]), col = "red", pch = 16, cex = 2.5)
 
       plot(xpos * (xarena/bg.dim[2]), ypos * (yarena/bg.dim[1]), col = "#08306B", type = "l", lwd = 2, pch = 16, xlim = c(0, bg.dim[1] * (xarena/bg.dim[1])), ylim = c(0, bg.dim[2] * (yarena/bg.dim[2])), xlab = "Distance (mm)", ylab = "Distance (mm)", xaxs = "i", yaxs = "i", cex = 1.5, asp = 1)
 
@@ -126,16 +135,16 @@ diagnosticPDF = function(dirpath, xarena, yarena, fps = 30, box = 1, jitter.damp
     } else {
 
       # Calculate co-oordinates to redraw tracking box around last position
-      if (!is.na(tail(xpos, 1))) {x1 = xpos[i - 1] - dim.x * box}
+      if (!is.na(utils::tail(xpos, 1))) {x1 = xpos[i - 1] - dim.x * box}
       if (x1 < 0) {x1 = 0}
       if (x1 > bg.dim[2]) {x1 = bg.dim[2]}
-      if (!is.na(tail(xpos, 1))) {x2 = xpos[i - 1] + dim.x * box}
+      if (!is.na(utils::tail(xpos, 1))) {x2 = xpos[i - 1] + dim.x * box}
       if (x2 < 0) {x2 = 0}
       if (x2 > bg.dim[2]) {x2 = bg.dim[2]}
-      if (!is.na(tail(ypos, 1))) {y1 = ypos[i - 1] - dim.y * box}
+      if (!is.na(utils::tail(ypos, 1))) {y1 = ypos[i - 1] - dim.y * box}
       if (y1 < 0) {y1 = 0}
       if (y1 > bg.dim[1]) {y1 = bg.dim[1]}
-      if (!is.na(tail(ypos, 1))) {y2 = ypos[i - 1] + dim.y * box}
+      if (!is.na(utils::tail(ypos, 1))) {y2 = ypos[i - 1] + dim.y * box}
       if (y2 < 0) {y2 = 0}
       if (y2 > bg.dim[1]) {y2 = bg.dim[1]}
 
@@ -144,11 +153,11 @@ diagnosticPDF = function(dirpath, xarena, yarena, fps = 30, box = 1, jitter.damp
 	      frame = frame[(dim(frame)[1] - bg.crop[3]):(dim(frame)[1] - bg.crop[4]), bg.crop[1]:bg.crop[2]]
 	      frame = abs(frame - bg.med)
 	      tbox = reflect(frame[y2:y1,x1:x2])
-	      tbox.bin = as.matrix(bwlabel(opening(thresh(isoblur(as.cimg(tbox), blur)))))
+	      tbox.bin = as.matrix(EBImage::bwlabel(EBImage::opening(EBImage::thresh(imager::isoblur(imager::as.cimg(tbox), blur)))))
 
       # Calculate proportion of overlapping pixels from between current & previous frame
       animal.new = which(tbox.bin == 1)
-      animal.move = (length(na.omit(match(animal.last, animal.new))))/(max(c(length(animal.last), length(animal.new))))
+      animal.move = (length(stats::na.omit(match(animal.last, animal.new))))/(max(c(length(animal.last), length(animal.new))))
       animal.last = animal.new
 
       # Check if animal is of ~right size
@@ -159,7 +168,7 @@ diagnosticPDF = function(dirpath, xarena, yarena, fps = 30, box = 1, jitter.damp
 
           animal = ellPar(which(tbox.bin == 1, arr.ind = TRUE))
 
-          # Correct xy positions relative to entire frame and store
+          # Corgraphics::rect xy positions relative to entire frame and store
           xpos[i] = round(animal$centre[2] + x1)
           ypos[i] = round(animal$centre[1] + y1)
 
@@ -179,18 +188,18 @@ diagnosticPDF = function(dirpath, xarena, yarena, fps = 30, box = 1, jitter.damp
           frame.break = greyJPEG(file.list[i])
           frame.break = frame.break[(dim(frame.break)[1] - bg.crop[3]):(dim(frame.break)[1] - bg.crop[4]), bg.crop[1]:bg.crop[2]]
           frame.break = reflect(abs(frame.break - bg.med))
-          frame.break.bin = as.matrix(bwlabel(opening(thresh(isoblur(as.cimg(frame.break), blur)))))
+          frame.break.bin = as.matrix(EBImage::bwlabel(EBImage::opening(EBImage::thresh(imager::isoblur(imager::as.cimg(frame.break), blur)))))
           blob.pixcount = as.matrix(count(frame.break.bin[frame.break.bin > 0]))
 
         if (nrow(blob.pixcount) > 1) {
-          frame.break.bin = rmObjects(frame.break.bin, blob.pixcount[blob.pixcount[,2] < mean(animal.size, na.rm = TRUE)*min.animal | blob.pixcount[,2] > mean(animal.size, na.rm = TRUE)*max.animal,1])
+          frame.break.bin = EBImage::rmObjects(frame.break.bin, blob.pixcount[blob.pixcount[,2] < mean(animal.size, na.rm = TRUE)*min.animal | blob.pixcount[,2] > mean(animal.size, na.rm = TRUE)*max.animal,1])
         }
 
         if (length(which(frame.break.bin == 1)) > mean(animal.size, na.rm = TRUE)*min.animal & length(which(frame.break.bin == 1)) < mean(animal.size, na.rm = TRUE)*max.animal) {
 
           animal = ellPar(which(frame.break.bin == 1, arr.ind = TRUE))
 
-          # Correct xy positions relative to entire frame and store
+          # Corgraphics::rect xy positions relative to entire frame and store
           xpos[i] = round(animal$centre[2])
           ypos[i] = bg.dim[1] - round(animal$centre[1])
 
@@ -227,20 +236,20 @@ diagnosticPDF = function(dirpath, xarena, yarena, fps = 30, box = 1, jitter.damp
       temp.movement[, 2] = c(0, temp.velocity)
       temp.movement[, 3] = c(temp.time)
 
-      par(mfrow = c(2, 3), mar = c(5, 5, 2, 3) + 0.1, cex.axis = 1.5, cex.lab = 1.5)
+      graphics::par(mfrow = c(2, 3), mar = c(5, 5, 2, 3) + 0.1, cex.axis = 1.5, cex.lab = 1.5)
 
       f = greyJPEG(file.list[i])
       f = f[(dim(f)[1] - bg.crop[3]):(dim(f)[1] - bg.crop[4]), bg.crop[1]:bg.crop[2]]
       plot(1, 1, xlim = c(1, bg.dim[2]), ylim = c(1, bg.dim[1]), type = "n", xaxs = "i", yaxs = "i", xaxt = "n", yaxt = "n", xlab = "", ylab = "", bty = "o", asp = 1)
-      rasterImage(as.raster(reflect(f)), 1, 1, bg.dim[2], bg.dim[1])
+      graphics::rasterImage(raster::as.raster(reflect(f)), 1, 1, bg.dim[2], bg.dim[1])
 
-      plot(raster(reflect(frame), xmn = 0, xmx = bg.dim[2], ymn = 0, ymx = bg.dim[1]), legend = FALSE, xaxs = "i", yaxs = "i", xaxt = "n", yaxt = "n", cex = 1.5, col = viridis(256), asp = 1)
-      rect(x1, y1, x2, y2, border = "yellow", lwd = 1.5)
+      raster::plot(raster::raster(reflect(frame), xmn = 0, xmx = bg.dim[2], ymn = 0, ymx = bg.dim[1]), legend = FALSE, xaxs = "i", yaxs = "i", xaxt = "n", yaxt = "n", cex = 1.5, col = viridis::viridis(256), asp = 1)
+      graphics::rect(x1, y1, x2, y2, border = "yellow", lwd = 1.5)
 
-      plot(raster(reflect(tbox), xmn = 0, xmx = dim(tbox)[2], ymn = 0, ymx = dim(tbox)[1]), legend = FALSE, xaxs = "i", yaxs = "i", xaxt = "n", yaxt = "n", cex = 1.5, col = viridis(256))
-      points(round(animal$centre[2]), round(animal$centre[1]), col = "red", pch = 16, cex = 2.5)
+      raster::plot(raster::raster(reflect(tbox), xmn = 0, xmx = dim(tbox)[2], ymn = 0, ymx = dim(tbox)[1]), legend = FALSE, xaxs = "i", yaxs = "i", xaxt = "n", yaxt = "n", cex = 1.5, col = viridis::viridis(256))
+      graphics::points(round(animal$centre[2]), round(animal$centre[1]), col = "red", pch = 16, cex = 2.5)
 
-      segments((xpos[i - 1] - x1), (ypos[i - 1] - y1), (xpos[i] - x1), (ypos[i] - y1), col = "red", pch = 16, lwd = 3)
+      graphics::segments((xpos[i - 1] - x1), (ypos[i - 1] - y1), (xpos[i] - x1), (ypos[i] - y1), col = "red", pch = 16, lwd = 3)
 
       plot(xpos * (xarena/bg.dim[2]), ypos * (yarena/bg.dim[1]), col = "#08306B", type = "l", lwd = 2, pch = 16, xlim = c(0, bg.dim[1] * (xarena/bg.dim[1])), ylim = c(0, bg.dim[2] * (yarena/bg.dim[2])), xlab = "Distance (mm)", ylab = "Distance (mm)", xaxs = "i", yaxs = "i", cex = 1.5, asp = 1)
 
@@ -250,10 +259,10 @@ diagnosticPDF = function(dirpath, xarena, yarena, fps = 30, box = 1, jitter.damp
       plot(temp.movement[, 3], temp.movement[, 2], type = "l", lwd = 1.5, xlab = "Time (s)", ylab = "Velocity (mm/s)", bty = "l", xlim = c(0, length(file.list) * (1/fps)), col = "#08306B", cex = 1.5)
 
     }
-    setTxtProgressBar(pbloop, i)
+    utils::setTxtProgressBar(pbloop, i)
   }
 
-  dev.off()
+  grDevices::dev.off()
 
   time = seq(0, length.out = length(xpos), by = 1/fps)
   distance = c()
@@ -284,7 +293,7 @@ diagnosticPDF = function(dirpath, xarena, yarena, fps = 30, box = 1, jitter.damp
 
   if (length(breaks) > 0) {
     warning("Tracking was not possible for ", length(breaks), " frames: you can proceed with this tracked path but you might consider using a higher frame rate or increasing the tracking 'box' size to improve the result.")
-    flush.console()
+    utils::flush.console()
   }
 
   return(list(position = cbind(xpos, ypos), dim.pix = c(bg.dim[2], bg.dim[1]), dim.arena = c(xarena, yarena), fps = fps, movement = movement, total.distance = total.distance, mean.velocity = mean.velocity, total.duration = total.duration, breaks = breaks))

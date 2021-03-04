@@ -6,7 +6,7 @@
 #' @importFrom jpeg readJPEG
 #' @export
 greyJPEG = function(filepath) {
-  jpeg = readJPEG(filepath)
+  jpeg = jpeg::readJPEG(filepath)
   grey.jpeg = (jpeg[,,1]*0.2126)+(jpeg[,,2]*0.7152)+(jpeg[,,3]*0.0722)
   return(grey.jpeg)
 }

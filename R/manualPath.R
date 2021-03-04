@@ -8,10 +8,10 @@
 #' @details \code{manualPath} tracks an individual animal's movement across a series of still frames by requiring the user to manually click onht eanimal's position in each frame.
 #' @return A list containing a matrix of xy co-ordinates of the animal in each frame, a matrix of movement data including the distance, velocity and trajectories of movement between frames, and summary statistics.
 #' @importFrom raster raster
+#' @importFrom graphics locator
+#' @importFrom utils flush.console
 #' @export
 manualPath = function(dirpath, xarena, yarena, fps = 30) {
-
-  require(raster, quietly = TRUE, warn.conflicts = FALSE)
 
   if (length(dir(dirpath, "*.jpg")) > 0) {
     file.list = list.files(dirpath, full.names = TRUE)
@@ -21,28 +21,28 @@ manualPath = function(dirpath, xarena, yarena, fps = 30) {
 
   # Crop array to area of interest if needed
   message("Click once on the top left corner of your arena, followed by clicking once on the bottom right corner of your arena, to define the opposing corners of the entire arena...\n")
-  flush.console()
-  plot(raster(file.list[1], band = 2), col = gray.colors(256), asp = 1, legend = FALSE)
-  bg.crop = base::as.vector(extent(select(raster(file.list[1], band = 2))))
+  utils::flush.console()
+  raster::plot(raster::raster(file.list[1], band = 2), col = grDevices::gray.colors(256), asp = 1, legend = FALSE)
+  bg.crop = base::as.vector(raster::extent(raster::select(raster::raster(file.list[1], band = 2))))
 
   xpos = c()
   ypos = c()
 
   message("Click once on the animal in each frame. Choose an easily identifiable part of the animal for consistency, e.g. the front of the head. Frames will advance automatically...\n")
-  flush.console()
+  utils::flush.console()
 
   for (i in 1:length(file.list)) {
-    par(mar = c(7,5,0,0))
+    graphics::par(mar = c(7,5,0,0))
 
     bg.ref = greyJPEG(file.list[i])
     bg.ref = bg.ref[(dim(bg.ref)[1] - bg.crop[3]):(dim(bg.ref)[1] - bg.crop[4]), bg.crop[1]:bg.crop[2]]
     bg.dim = dim(bg.ref)
-    plot(raster(reflect(bg.ref), xmn = 0, xmx = bg.dim[2], ymn = 0, ymx = bg.dim[1]), col = gray.colors(256), asp = 1, legend = FALSE)
+    raster::plot(raster::raster(reflect(bg.ref), xmn = 0, xmx = bg.dim[2], ymn = 0, ymx = bg.dim[1]), col = grDevices::gray.colors(256), asp = 1, legend = FALSE)
 
-    mtext("x", side = 1, line = 3, adj = 0.0, cex = 2, col = "red", at = -25)
-    mtext("Click the 'x' if the animal is not visible", side = 1, line = 4, adj = 0.0, cex = 1, col = "red", at = -25)
-    mtext(paste(i, "/", length(file.list), sep = ""), side = 1, line = 2, adj = 0.0, cex = 1, col = "darkgreen", at = -25)
-    temp = locator(1)
+    graphics::mtext("x", side = 1, line = 3, adj = 0.0, cex = 2, col = "red", at = -25)
+    graphics::mtext("Click the 'x' if the animal is not visible", side = 1, line = 4, adj = 0.0, cex = 1, col = "red", at = -25)
+    graphics::mtext(paste(i, "/", length(file.list), sep = ""), side = 1, line = 2, adj = 0.0, cex = 1, col = "darkgreen", at = -25)
+    temp = graphics::locator(1)
     xpos[i] = round(temp[[1]])
     ypos[i] = round(temp[[2]])
   }
