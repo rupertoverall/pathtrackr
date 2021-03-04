@@ -3,7 +3,7 @@
 Overview
 --------
 
-This is a development fork of the *pathrackr* package by Dr Aaron Harmer and colleagues.
+This is a development fork of the *pathtrackr* package by Dr Aaron Harmer and colleagues.
 For more information about the package, please see the project website [https://www.harmerlab.com/pathtrackr](https://www.harmerlab.com/pathtrackr) and the github repository of the main project [https://github.com/aharmer/pathtrackr](https://github.com/aharmer/pathtrackr).
 
 The key addition in this fork is a non-interactive tracking module `batchTrackPath` with optimised parameters for hands-free batch processing of large experiments.
