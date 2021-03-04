@@ -8,7 +8,7 @@ output:
     toc: true
     number_sections: false
 vignette: >
-  %\VignetteIndexEntry{Getting started with pathtrackr}
+  %\VignetteIndexEntry{Getting started with *pathtrackr*}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -31,7 +31,10 @@ Visualising and analysing animal movement patterns is essential to many behaviou
 
 <br />  
 
-<img src="https://user-images.githubusercontent.com/10540385/53382775-2bae2e80-39da-11e9-86ea-ff8036a8bc77.gif" width="600" style="display: block; margin: auto;" />
+<video width="600" autoplay loop style="display: block; margin: auto;">
+  <source src="images/53382775-2bae2e80-39da-11e9-86ea-ff8036a8bc77.mp4" type="video/mp4">
+Your browser does not support the video tag.
+</video>
 
 <br />  
 
@@ -44,7 +47,7 @@ The user first denotes the boundaries of the arena, that are then applied to all
   
 The user is then prompted to draw a box (the tracking box) around the position of the animal in the first frame. In each subsequent frame, only the pixels within the tracking box are processed, which greatly improves processing speed, as well as ignores any other background movement occuring outside the tracking box. Within the tracking box, the current frame's pixel values are substracted from the reference frame pixel values, resulting in values of approximately zero for background pixels, and higher intensity value pixels where the animal is present. This image is then binarised based on pixel intensity, and animal pixels labelled via blob detection. An ellipse is fitted to the blob and its centroid calculated. The xy position of the centroid is stored before moving to the next frame where a new tracking box is drawn around the last known position of the animal and the above process repeated.
 
-<img src="https://user-images.githubusercontent.com/10540385/53464166-2e7a5380-3aae-11e9-84f0-19f17027f568.gif" width="600" style="display: block; margin: auto;" />
+<img src="images/53464166-2e7a5380-3aae-11e9-84f0-19f17027f568.gif" width="600" style="display: block; margin: auto;" />
 
 Small movements such as orientation changes or leg movements can cause 'jitter' in the detected path that results in overestimation of path length. Therefore we have included a jitter damping parameter to the tracking functions to elimante some of this noise. The number of pixels labelled as 'animal' after blob detection is recorded during each frame. If the position of labelled pixels overlaps by more than 90% (the default) between frames, the animal's position is not updated. The jitter damping parameter can be adjusted to produce smooth paths (if appropriate for the animal being tracked). 
 
@@ -123,11 +126,11 @@ Next, use the *trackPath()* function and assign the results to a new object. Spe
 
 After running the function and the still frames have been loaded, you will be prompted to define the boundaries of the arena. Click once on the top left corner of your arena, followed by clicking once on the bottom right corner of your arena, to define the opposing corners of the entire arena.
 
-<img src="https://user-images.githubusercontent.com/10540385/30007883-b9e44756-916c-11e7-8fd7-36add552eaaa.png" width="600" style="display: block; margin: auto;" />  
+<img src="images/30007883-b9e44756-916c-11e7-8fd7-36add552eaaa.png" width="600" style="display: block; margin: auto;" />  
 
 You will then be prompted to define the animal in the first frame of the video. Imagine a rectangle that defines the minimum region of your arena that contains your whole animal. Click once to define the top left corner of this rectangle, followed by clicking once to define the bottom right corner of this rectangle.
 
-<img src="https://user-images.githubusercontent.com/10540385/30007903-dfb1619e-916c-11e7-8225-0ac1507d86ec.png" width="600" style="display: block; margin: auto;" />
+<img src="images/30007903-dfb1619e-916c-11e7-8225-0ac1507d86ec.png" width="600" style="display: block; margin: auto;" />
 
 The function will now define a background reference image and subtract it from each frame, this may take some time depending on your video resolution and number of frames. The function will now begin tracking your animal across frames and return a list with a range of useful information, including a matrix of the xy co-ordinates of the animal in each frame, a matrix of movement data such as distances, velocities and bearings between each frame, and some summary data. Each of these elements can be retrieved by referencing the appropriate element in the returned list (e.g. path.list$position).
 
@@ -143,7 +146,7 @@ The *plotPath()* function will plot the animal's path across the arena with dens
 
 <br />  
 
-<img src="https://user-images.githubusercontent.com/10540385/30009277-327be3aa-917b-11e7-941e-8d43eb60ae52.jpeg" width="600" style="display: block; margin: auto;" />
+<img src="images/30009277-327be3aa-917b-11e7-941e-8d43eb60ae52.jpeg" width="600" style="display: block; margin: auto;" />
 
    
 
@@ -155,7 +158,7 @@ The *plotSummary()* function returns a four-panelled plot summarising the the an
 ```
 <br />  
 
-<img src="https://user-images.githubusercontent.com/10540385/30009666-452d8262-917e-11e7-9d3d-85b8e23e25cd.jpeg" width="600" style="display: block; margin: auto;" />
+<img src="images/30009666-452d8262-917e-11e7-9d3d-85b8e23e25cd.jpeg" width="600" style="display: block; margin: auto;" />
 
    
 
