@@ -261,7 +261,7 @@ batchTrackPath = function(input.dir, output.filename = NULL, fps, box = 1, livep
     # Check output filename is sane. It should use the correct extension.
     # Non-standard extensions will not be removed (in case '.' is in the filename) but '.csv' will be appended.
     if(tools::file_ext(output.filename) != "csv") output.filename = paste(output.filename, "csv", sep = ".")
-    utils::write.csv(cbind(t = time, x = xpos, y = ypos), file = output.filename)
+    utils::write.csv(cbind(t = time, x = xpos, y = ypos), file = output.filename, row.names = FALSE)
   }
   
   return(list(position = cbind(x = xpos, y = ypos), timestamp = cbind(t = time), dim.area = c(bg.dim[2], bg.dim[1]), fps = fps, breaks = breaks))
